@@ -4,6 +4,7 @@ import * as site from "./site";
 import * as org from "./org";
 import * as resource from "./resource";
 import * as domain from "./domain";
+import * as certificate from "./certificates";
 import * as target from "./target";
 import * as user from "./user";
 import * as auth from "./auth";
@@ -879,6 +880,15 @@ authenticated.delete(
     verifyUserHasAction(ActionsEnum.deleteOrgDomain),
     logActionAudit(ActionsEnum.deleteOrgDomain),
     domain.deleteAccountDomain,
+);
+
+authenticated.post(
+    `/org/:orgId/domain/:domainId/certificate/upload`,
+    verifyOrgAccess,
+    verifyDomainAccess,
+    verifyUserHasAction(ActionsEnum.updateOrgDomain),
+    logActionAudit(ActionsEnum.updateOrgDomain),
+    certificate.uploadCertificate,
 );
 
 authenticated.get(

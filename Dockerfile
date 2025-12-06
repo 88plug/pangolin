@@ -7,7 +7,7 @@ ARG DATABASE=sqlite
 
 # COPY package.json package-lock.json ./
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY . .
 
@@ -50,7 +50,7 @@ RUN apk add --no-cache curl tzdata
 # COPY package.json package-lock.json ./
 COPY package*.json ./
 
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static

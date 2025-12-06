@@ -30,6 +30,7 @@ import {
     SelectValue
 } from "./ui/select";
 import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { toASCII } from "punycode";
@@ -110,6 +111,41 @@ export default function DomainCertForm({
     const api = createApiClient(useEnvContext());
     const { toast } = useToast();
     const [saveLoading, setSaveLoading] = useState(false);
+    const [uploadLoading, setUploadLoading] = useState(false);
+    const [certContent, setCertContent] = useState("");
+    const [keyContent, setKeyContent] = useState("");
+
+    const handleCertUpload = async () => {
+        if (!certContent.trim() || !keyContent.trim() || !orgId || !domainId) return;
+
+        setUploadLoading(true);
+        try {
+            await api.post(`/org/${orgId}/domain/${domainId}/certificate/upload`, {
+                certFile: certContent,
+                keyFile: keyContent
+            });
+
+            toast({
+                title: t("success"),
+                description: t("certificateUploaded", {
+                    fallback: "Certificate uploaded successfully"
+                }),
+                variant: "default"
+            });
+
+            // Reset inputs
+            setCertContent("");
+            setKeyContent("");
+        } catch (error) {
+            toast({
+                title: t("error"),
+                description: formatAxiosError(error),
+                variant: "destructive"
+            });
+        } finally {
+            setUploadLoading(false);
+        }
+    };
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -343,6 +379,64 @@ export default function DomainCertForm({
                                                 )}
                                             />
                                         )}
+
+                                    {/* Custom Certificate Upload */}
+                                    <div className="space-y-4 pt-6 mt-6 border-t">
+                                        <div>
+                                            <h4 className="text-sm font-medium">
+                                                {t("customCertificate", {
+                                                    fallback: "Custom Certificate"
+                                                })}
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                {t("customCertificateDescription", {
+                                                    fallback: "Paste your certificate and private key in PEM format"
+                                                })}
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <FormLabel>
+                                                {t("certificate", {
+                                                    fallback: "Certificate"
+                                                })}
+                                            </FormLabel>
+                                            <Textarea
+                                                placeholder="-----BEGIN CERTIFICATE-----"
+                                                value={certContent}
+                                                onChange={(e) => setCertContent(e.target.value)}
+                                                rows={4}
+                                                className="font-mono text-xs"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <FormLabel>
+                                                {t("privateKey", {
+                                                    fallback: "Private Key"
+                                                })}
+                                            </FormLabel>
+                                            <Textarea
+                                                placeholder="-----BEGIN PRIVATE KEY-----"
+                                                value={keyContent}
+                                                onChange={(e) => setKeyContent(e.target.value)}
+                                                rows={4}
+                                                className="font-mono text-xs"
+                                            />
+                                        </div>
+
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled={!certContent.trim() || !keyContent.trim() || uploadLoading}
+                                            loading={uploadLoading}
+                                            onClick={handleCertUpload}
+                                        >
+                                            {t("uploadCertificate", {
+                                                fallback: "Upload Certificate"
+                                            })}
+                                        </Button>
+                                    </div>
                                 </>
                             </form>
                         </Form>
