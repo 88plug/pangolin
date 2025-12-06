@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, domains } from "@server/db";
+import { db, domains, certificates } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -26,7 +26,21 @@ async function query(domainId?: string, orgId?: string) {
             .from(domains)
             .where(eq(domains.domainId, domainId))
             .limit(1);
-        return res;
+
+        // Get certificate status if exists
+        let certStatus: string | null = null;
+        if (res) {
+            const [cert] = await db
+                .select({ status: certificates.status })
+                .from(certificates)
+                .where(eq(certificates.domainId, domainId))
+                .limit(1);
+            if (cert) {
+                certStatus = cert.status;
+            }
+        }
+
+        return res ? { ...res, certificateStatus: certStatus } : undefined;
     }
 }
 

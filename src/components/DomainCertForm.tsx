@@ -12,6 +12,16 @@ import {
     SettingsSectionHeader,
     SettingsSectionTitle
 } from "./Settings";
+import {
+    Credenza,
+    CredenzaBody,
+    CredenzaClose,
+    CredenzaContent,
+    CredenzaDescription,
+    CredenzaFooter,
+    CredenzaHeader,
+    CredenzaTitle
+} from "@app/components/Credenza";
 import { Button } from "./ui/button";
 import {
     Form,
@@ -114,6 +124,7 @@ export default function DomainCertForm({
     const [uploadLoading, setUploadLoading] = useState(false);
     const [certContent, setCertContent] = useState("");
     const [keyContent, setKeyContent] = useState("");
+    const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
 
     const handleCertUpload = async () => {
         if (!certContent.trim() || !keyContent.trim() || !orgId || !domainId) return;
@@ -136,6 +147,7 @@ export default function DomainCertForm({
             // Reset inputs
             setCertContent("");
             setKeyContent("");
+            setShowOverwriteConfirm(false);
         } catch (error) {
             toast({
                 title: t("error"),
@@ -144,6 +156,21 @@ export default function DomainCertForm({
             });
         } finally {
             setUploadLoading(false);
+        }
+    };
+
+    const handleUploadClick = () => {
+        if (!certContent.trim() || !keyContent.trim()) return;
+
+        // Check if certificate already exists
+        const hasExistingCert = domain.certificateStatus &&
+            domain.certificateStatus !== "none" &&
+            domain.certificateStatus !== "";
+
+        if (hasExistingCert) {
+            setShowOverwriteConfirm(true);
+        } else {
+            handleCertUpload();
         }
     };
 
@@ -430,7 +457,7 @@ export default function DomainCertForm({
                                             variant="outline"
                                             disabled={!certContent.trim() || !keyContent.trim() || uploadLoading}
                                             loading={uploadLoading}
-                                            onClick={handleCertUpload}
+                                            onClick={handleUploadClick}
                                         >
                                             {t("uploadCertificate", {
                                                 fallback: "Upload Certificate"
@@ -454,6 +481,42 @@ export default function DomainCertForm({
                     </Button>
                 </SettingsSectionFooter>
             </SettingsSection>
+
+            {/* Overwrite Confirmation Dialog */}
+            <Credenza
+                open={showOverwriteConfirm}
+                onOpenChange={setShowOverwriteConfirm}
+            >
+                <CredenzaContent>
+                    <CredenzaHeader>
+                        <CredenzaTitle>
+                            {t("overwriteCertificate", {
+                                fallback: "Overwrite Certificate"
+                            })}
+                        </CredenzaTitle>
+                        <CredenzaDescription>
+                            {t("overwriteCertificateDescription", {
+                                fallback:
+                                    "A certificate already exists for this domain. Uploading a new certificate will replace the existing one."
+                            })}
+                        </CredenzaDescription>
+                    </CredenzaHeader>
+                    <CredenzaFooter>
+                        <CredenzaClose asChild>
+                            <Button variant="outline">
+                                {t("cancel")}
+                            </Button>
+                        </CredenzaClose>
+                        <Button
+                            onClick={handleCertUpload}
+                            loading={uploadLoading}
+                            disabled={uploadLoading}
+                        >
+                            {t("overwrite", { fallback: "Overwrite" })}
+                        </Button>
+                    </CredenzaFooter>
+                </CredenzaContent>
+            </Credenza>
         </SettingsContainer>
     );
 }

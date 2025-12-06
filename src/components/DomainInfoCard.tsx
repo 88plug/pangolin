@@ -14,12 +14,14 @@ type DomainInfoCardProps = {
     failed: boolean;
     verified: boolean;
     type: string | null;
+    certificateStatus?: string | null;
 };
 
 export default function DomainInfoCard({
     failed,
     verified,
-    type
+    type,
+    certificateStatus
 }: DomainInfoCardProps) {
     const t = useTranslations();
 
@@ -33,6 +35,44 @@ export default function DomainInfoCard({
                 return t("selectDomainTypeWildcardName");
             default:
                 return type;
+        }
+    };
+
+    const getCertBadge = () => {
+        if (!certificateStatus) {
+            return (
+                <Badge variant="outline">
+                    {t("none", { fallback: "None" })}
+                </Badge>
+            );
+        }
+        switch (certificateStatus) {
+            case "valid":
+                return (
+                    <Badge variant="green">
+                        {t("valid", { fallback: "Valid" })}
+                    </Badge>
+                );
+            case "pending":
+            case "requested":
+                return (
+                    <Badge variant="yellow">
+                        {t("pending", { fallback: "Pending" })}
+                    </Badge>
+                );
+            case "expired":
+            case "failed":
+                return (
+                    <Badge variant="red">
+                        {t(certificateStatus, { fallback: certificateStatus.charAt(0).toUpperCase() + certificateStatus.slice(1) })}
+                    </Badge>
+                );
+            default:
+                return (
+                    <Badge variant="outline">
+                        {certificateStatus}
+                    </Badge>
+                );
         }
     };
 
@@ -70,6 +110,12 @@ export default function DomainInfoCard({
                                     {t("pending", { fallback: "Pending" })}
                                 </Badge>
                             )}
+                        </InfoSectionContent>
+                    </InfoSection>
+                    <InfoSection>
+                        <InfoSectionTitle>{t("certificate", { fallback: "Certificate" })}</InfoSectionTitle>
+                        <InfoSectionContent>
+                            {getCertBadge()}
                         </InfoSectionContent>
                     </InfoSection>
                 </InfoSections>
